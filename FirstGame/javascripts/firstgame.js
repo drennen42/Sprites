@@ -2,11 +2,21 @@ var canvasBg = document.getElementById('canvasBg');
 var ctxBg = canvasBg.getContext('2d');
 var canvasJet = document.getElementById('canvasJet');
 var ctxJet = canvasJet.getContext('2d');
-var jet1;
+var canvasEnemy = document.getElementById('canvasEnemy');
+var ctxEnemy = canvasEnemy.getContext('2d');
+
+var jet1 = new Jet();;
 var gameWidth = canvasBg.width;
 var gameHeight = canvasBg.height;
-var fps = 10;
-var drawInterval;
+var isPlaying = false;
+var requestAnimFrame = window.requestAnimationFrame ||
+                       window.webkitRequestAnimationFrame ||
+                       window.mozRequestAnimationFrame ||
+                       window.msRequestAnimationFrame ||
+                       window.oRequestAnimationFrame;
+
+var enemies = [];
+// var spawnAmount = 5;
 
 var imageSprite = new Image();
 imageSprite.src = 'images/sprite.png';
@@ -16,24 +26,42 @@ imageSprite.addEventListener('load',init,false);
 
 // main functions
 function init(){
+  spawnEnemy(5);
   drawBg();
-  startDrawing();
-  jet1 = new Jet();
+  startLoop();
   document.addEventListener('keydown',checkKeyDown,false);
   document.addEventListener('keyup',checkKeyUp,false);
 }
 
-function draw(){
-  jet1.draw();
+function spawnEnemy(n){
+  for (var i = 0; i < n; i++) {
+    enemies[enemies.length] = new Enemy();
+  }
+
 }
 
-function startDrawing(){
-  stopDrawing();
-  drawInterval = setInterval(draw,fps);
+function drawAllEnemies(){
+  clearCtxEnemy();
+  for (var i = 0; i < enemies.length; i++) {
+    enemies[i].draw();
+  }
 }
 
-function stopDrawing(){
-  clearInterval(drawInterval);
+function loop(){
+  if (isPlaying) {
+    jet1.draw();
+    drawAllEnemies();
+    requestAnimFrame(loop);
+  }
+}
+
+function startLoop() {
+  isPlaying = true;
+  loop();
+}
+
+function stopLoop() {
+  isPlaying = false;
 }
 
 function drawBg() {
@@ -41,6 +69,7 @@ function drawBg() {
   var srcY = 0;
   var drawX = 0;
   var drawY = 0;
+
   ctxBg.drawImage(imageSprite,srcX,srcY,gameWidth,gameHeight,drawX,drawY,gameWidth,gameHeight);
 }
 
@@ -56,26 +85,41 @@ function clearCtxBg() {
 
 // jet functions
 function Jet() {
-  this.srcX = 800;
-  this.srcY = 78;
+  this.srcX = 0;
+  this.srcY = 500;
+  this.width = 128;
+  this.height = 61;
+  this.speed = 2;
   this.drawX = 200;
   this.drawY = 200;
-  this.width = 128;
-  this.height = 75;
-  this.speed = 2;
+  this.noseX = this.drawX;
+  this.noseY = this.drawY + this.width;
   this.isUpKey = false;
   this.isRightKey = false;
   this.isDownKey = false;
   this.isLeftKey = false;
+  this.isSpaceBar = false;
+  this.isShooting = false;
+  this.bullets = [];
+  this.currentBullet = 0;
+  for (var i = 0; i < 25; i++) {
+    this.bullets[this.bullets.length] = new Bullet();
+  }
 }
 
 Jet.prototype.draw = function(){
   clearCtxJet();
-  this.checkKeys();
+  this.checkDirection();
+  this.noseX = this.drawX + this.width;
+  this.noseY = this.drawY + 26;
+  this.checkShooting();
+  this.drawAllBullets();
+
   ctxJet.drawImage(imageSprite,this.srcX,this.srcY,this.width,this.height,this.drawX,this.drawY,this.width,this.height);
 };
 
-Jet.prototype.checkKeys = function(){
+
+Jet.prototype.checkDirection = function(){
   if (this.isUpKey && this.drawY > 0) {
     this.drawY -= this.speed;
   }
@@ -94,11 +138,61 @@ function clearCtxJet() {
   ctxJet.clearRect(0,0,gameWidth,gameHeight);
 }
 
+Jet.prototype.drawAllBullets = function(){
+  for (var i = 0; i < this.bullets.length; i++) {
+    if (this.bullets[i].drawX >= 0) this.bullets[i].draw();
+  }
+};
+
+Jet.prototype.checkShooting = function(){
+  if(this.isSpaceBar && !this.isShooting) {
+    this.isShooting = true;
+    this.bullets[this.currentBullet].fire(this.noseX, this.noseY);
+    this.currentBullet++;
+    if(this.currentBullet >= this.bullets.length) this.currentBullet = 0;
+  } else if(!this.isSpaceBar) {
+    this.isShooting = false;
+  }
+};
 // end of jet functions
 
 
 
 
+// enemy functions
+
+function Enemy() {
+  this.srcX = 131;
+  this.srcY = 500;
+  this.width = 128;
+  this.height = 78;
+  this.speed = 2;
+  this.drawX = Math.floor(Math.random() * 1000) + gameWidth;
+  this.drawY = Math.floor(Math.random() * 422);
+}
+
+Enemy.prototype.draw = function(){
+  this.drawX -= this.speed;
+  ctxEnemy.drawImage(imageSprite,this.srcX,this.srcY,this.width,this.height,this.drawX,this.drawY,this.width,this.height);
+  this.checkEscaped();
+};
+
+Enemy.prototype.checkEscaped = function(){
+  if (this.drawX + this.width <= 0) {
+    this.recycleEnemy();
+  }
+};
+
+Enemy.prototype.recycleEnemy = function(){
+  this.drawX = Math.floor(Math.random() * 1000) + gameWidth;
+  this.drawY = Math.floor(Math.random() * 422);
+};
+
+function clearCtxEnemy() {
+  ctxEnemy.clearRect(0,0,gameWidth,gameHeight);
+}
+
+// end of enemy functions
 
 // event functions
 function checkKeyDown(e) {
@@ -117,6 +211,10 @@ function checkKeyDown(e) {
   }
   if (keyID === 37 || keyID === 65) { // left arrow or 'a' key
     jet1.isLeftKey = true;
+    e.preventDefault();
+  }
+  if (keyID === 32) { // spacebar
+    jet1.isSpaceBar = true;
     e.preventDefault();
   }
 }
@@ -139,6 +237,39 @@ function checkKeyUp(e) {
     jet1.isLeftKey = false;
     e.preventDefault();
   }
+  if (keyID === 32) { // spacebar
+    jet1.isSpaceBar = false;
+    e.preventDefault();
+  }
 }
 
 // end of event functions
+
+
+// bullet functions
+
+function Bullet() {
+  this.srcX = 331;
+  this.srcY = 500;
+  this.drawX = -20;
+  this.drawY = 0;
+  this.width = 16;
+  this.height = 14;
+}
+
+Bullet.prototype.draw = function(){
+  this.drawX += 3;
+  ctxJet.drawImage(imageSprite,this.srcX,this.srcY,this.width,this.height,this.drawX,this.drawY,this.width,this.height);
+  if (this.drawX > gameWidth) this.recycle;
+};
+
+
+Bullet.prototype.fire = function(startX, startY){
+  this.drawX = startX;
+  this.drawY = startY;
+};
+
+Bullet.prototype.recycle = function(){
+  this.drawX = -20;
+};
+// end of bullet functions

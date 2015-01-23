@@ -4,11 +4,12 @@
 # To import these sprites into your Unity project, download "TexturePackerImporter":
 # http://www.codeandweb.com/texturepacker/unity
 #
-# Sprite sheet: new_sprite.png (1024 x 512)
-# $TexturePacker:SmartUpdate:c1abccabec02e26f3ece6d319e065c9c:5e4004980154cf32ff55f3dc711958fe:5b47121471ca61c35ce3accbb46cd798$
+# Sprite sheet: sprite.png (800 x 800)
+# $TexturePacker:SmartUpdate:0acb74980b1578eae4a4779910f16ac6:3d511feb4bdfc5a8cad14a5564b43f37:2f5d0bdbc902f15bc7847dd4f935b4d1$
 #
 
-bullet;928;498;16;14;0.5;0.5
-enemy_plane;800;434;128;78;0.5;0.5
-game-background;0;12;800;500;0.5;0.5
-plane;800;359;128;75;0.5;0.5066666666666666
+game-background;0;300;800;500;0.5;0.5
+plane;0;239;131;61;0.4961832061068702;0.5245901639344263
+enemy_plane;131;222;128;78;0.5;0.5
+explosion;259;228;72;72;0.5;0.5
+bullet;331;286;16;14;0.5;0.5

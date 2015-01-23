@@ -8,7 +8,7 @@ body {
   margin: 100px auto 0px;
 }
 
-#canvasJet {
+#canvasJet, #canvasEnemy {
   display: block;
   margin:-500px auto 0px;
 }
