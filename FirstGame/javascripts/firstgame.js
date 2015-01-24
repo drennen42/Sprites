@@ -89,7 +89,7 @@ function Jet() {
   this.srcY = 500;
   this.width = 128;
   this.height = 61;
-  this.speed = 2;
+  this.speed = 4;
   this.drawX = 200;
   this.drawY = 200;
   this.noseX = this.drawX;
@@ -141,6 +141,7 @@ function clearCtxJet() {
 Jet.prototype.drawAllBullets = function(){
   for (var i = 0; i < this.bullets.length; i++) {
     if (this.bullets[i].drawX >= 0) this.bullets[i].draw();
+    if(this.bullets[i].explosion.hasHit) this.bullets[i].explosion.draw();
   }
 };
 
@@ -255,11 +256,13 @@ function Bullet() {
   this.drawY = 0;
   this.width = 16;
   this.height = 14;
+  this.explosion = new Explosion();
 }
 
 Bullet.prototype.draw = function(){
-  this.drawX += 3;
+  this.drawX += 10;
   ctxJet.drawImage(imageSprite,this.srcX,this.srcY,this.width,this.height,this.drawX,this.drawY,this.width,this.height);
+  this.checkHitEnemy();
   if (this.drawX > gameWidth) this.recycle;
 };
 
@@ -269,7 +272,49 @@ Bullet.prototype.fire = function(startX, startY){
   this.drawY = startY;
 };
 
+Bullet.prototype.checkHitEnemy = function(){
+  for (var i = 0; i < enemies.length; i++) {
+    if(this.drawX >= enemies[i].drawX &&
+       this.drawX <= enemies[i].drawX + enemies[i].width &&
+       this.drawY >= enemies[i].drawY &&
+       this.drawY <= enemies[i].drawY + enemies[i].height) {
+          this.explosion.drawX = enemies[i].drawX - (this.explosion.width / 2);
+          this.explosion.drawY = enemies[i].drawY;
+          this.explosion.hasHit = true;
+          this.recycle();
+          enemies[i].recycleEnemy();
+    }
+  }
+};
+
 Bullet.prototype.recycle = function(){
   this.drawX = -20;
 };
 // end of bullet functions
+
+
+// explosion functions
+
+function Explosion() {
+  this.srcX = 259;
+  this.srcY = 500;
+  this.drawX = 0;
+  this.drawY = 0;
+  this.width = 72;
+  this.height = 72;
+  this.currentFrame = 0;
+  this.totalFrames = 10;
+  this.hasHit = false;
+}
+
+Explosion.prototype.draw = function(){
+  if(this.currentFrame <= this.totalFrames) {
+    ctxJet.drawImage(imageSprite,this.srcX,this.srcY,this.width,this.height,this.drawX,this.drawY,this.width,this.height);
+    this.currentFrame++;
+  } else {
+    this.hasHit = false;
+    this.currentFrame = 0;
+  }
+};
+
+// end of explosion functions
